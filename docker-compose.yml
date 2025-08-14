@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  postgres:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: postgres-container
+    environment:
+      POSTGRES_USER: 
+      POSTGRES_PASSWORD: 
+      POSTGRES_DB: 
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./init_sql.sql:/docker-entrypoint-initdb.d/init_sql.sql
