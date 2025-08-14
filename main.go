@@ -13,9 +13,9 @@ import (
 const (
 	host     = "localhost"
 	port     = 5432
-	user     = ""
-	password = ""
-	dbname   = ""
+	user     = "postgres_user"
+	password = "qwerty"
+	dbname   = "penguin"
 )
 
 func main() {

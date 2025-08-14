@@ -30,6 +30,7 @@ CREATE TABLE penguin.spreadsheetpermissions (
     columns_permissions TEXT,
     FOREIGN KEY (spreadsheet_id) REFERENCES penguin.spreadsheet (id),
     FOREIGN KEY (role_id) REFERENCES
+)
 
 -- Insert spreadsheets with proper schema format
 INSERT INTO penguin.spreadsheet (id, report_name, created_at, schema)

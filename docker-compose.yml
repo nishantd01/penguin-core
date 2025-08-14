@@ -6,9 +6,9 @@ services:
       dockerfile: Dockerfile
     container_name: postgres-container
     environment:
-      POSTGRES_USER: 
-      POSTGRES_PASSWORD: 
-      POSTGRES_DB: 
+      POSTGRES_USER: postgres_user
+      POSTGRES_PASSWORD: qwerty
+      POSTGRES_DB: penguin
     ports:
       - "5432:5432"
     volumes:
