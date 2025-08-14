@@ -36,9 +36,9 @@ CREATE TABLE penguin.spreadsheetpermissions (
 INSERT INTO penguin.roles (id name)
 VALUES
 (1, 'ADMIN 1'),
-(2, 'ADMIN 1'),
-(3, 'ADMIN 2'),
-(4, 'ADMIN 3');
+(2, 'ADMIN 2'),
+(3, 'ADMIN 3'),
+(4, 'ADMIN 4');
 
 -- Insert default users
 INSERT INTO penguin.users (id, name, email, rold_id)
