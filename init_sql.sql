@@ -32,6 +32,22 @@ CREATE TABLE penguin.spreadsheetpermissions (
     FOREIGN KEY (role_id) REFERENCES
 )
 
+-- Insert default roles
+INSERT INTO penguin.roles (id name)
+VALUES
+(1, 'ADMIN 1'),
+(2, 'ADMIN 2'),
+(3, 'ADMIN 3'),
+(4, 'ADMIN 4');
+
+-- Insert default users
+INSERT INTO penguin.users (id, name, email, rold_id)
+VALUES
+(1, 'Kshitij Mathur', 'k.mathur68@gmail.com', '1'),
+(2, 'Nishant Dehariya', 'nishantd02@gmail.com', 2),
+(3, 'Mayank Kumar', 'mayankmk165@gmail.com', 3),
+(4, 'Pranav TV', 'to_be_filled@gmail.com', 4),
+
 -- Insert spreadsheets with proper schema format
 INSERT INTO penguin.spreadsheet (id, report_name, created_at, schema)
 VALUES
