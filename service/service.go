@@ -57,16 +57,30 @@ func (s *UserService) GetRoles() ([]string, error) {
 }
 
 type AccessCheckRequest struct {
-    Email      string `json:"email"`
-    ReportName string `json:"report_name"`
-    ColumnName string `json:"column_name"`
+	Email      string `json:"email"`
+	ReportName string `json:"report_name"`
+	ColumnName string `json:"column_name"`
 }
 
 func (s *UserService) CheckAccess(req AccessCheckRequest) (bool, error) {
-    query := `
+	query := `
         SELECT EXISTS (
             SELECT 1
             FROM penguin.user u
             JOIN penguin.role r ON u.role_id = r.id
             JOIN penguin.spreadsheetpermissions sp ON sp.role_id = r.id
             JOIN penguin.spreadsheet s ON s.id = sp.spreadsheet_id
+            WHERE u.email = $1
+            AND s.report_name = $2
+            AND sp.columns_permissions ILIKE '%' || $3 || '%'
+        )
+    `
+
+	var hasAccess bool
+	err := s.db.QueryRow(query, req.Email, req.ReportName, req.ColumnName).Scan(&hasAccess)
+	if err != nil {
+		return false, fmt.Errorf("error checking access: %v", err)
+	}
+
+	return hasAccess, nil
+}
