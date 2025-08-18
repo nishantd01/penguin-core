@@ -373,7 +373,7 @@ func createAppScript() string {
    function restrictColumnEditingToUser() {
 	 const sheetName = 'Sheet1';
 	 const columnRange = 'C:C';
-	 const editorEmail = 'nishantd02@gmail.com';
+	 const editorEmail = 'k.mathur68@gmail.com';
    
 	 const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
 	 const sheet = spreadsheet.getSheetByName(sheetName);
