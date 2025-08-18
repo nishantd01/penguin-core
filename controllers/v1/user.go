@@ -2,6 +2,7 @@ package v1
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -68,13 +69,17 @@ func (c *UserController) CheckAccess(ctx *gin.Context) {
 		return
 	}
 
+	log.Printf("Reques Body %+v\n", req)
+
 	hasAccess, err := c.userService.CheckAccess(req)
 	if err != nil {
+		log.Printf("Errorf %v\n", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	if !hasAccess {
+		log.Printf("No Access ")
 		ctx.JSON(http.StatusForbidden, gin.H{"message": "Access denied"})
 		return
 	}

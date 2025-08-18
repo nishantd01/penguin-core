@@ -75,28 +75,40 @@ type AccessCheckRequest struct {
 	ColumnName string `json:"column_name"`
 }
 
+func contains(slice []string, str string) bool {
+	for _, s := range slice {
+		if s == str {
+			return true
+		}
+	}
+	return false
+}
+
 // take sheetId as well , match permission wiyh reportId, email & column names rather thamn report name
 func (s *UserService) CheckAccess(req AccessCheckRequest) (bool, error) {
+
 	query := `
-    SELECT EXISTS (
-        SELECT 1
+        SELECT sp.columns_permissions
         FROM penguin.user u
         JOIN penguin.role r ON u.role_id = r.id
         JOIN penguin.spreadsheetpermissions sp ON sp.role_id = r.id
         JOIN penguin.spreadsheet s ON s.id = sp.spreadsheet_id
         WHERE u.email = $1
         AND s.id = $2
-        AND $3 = ANY(sp.columns_permissions::text[])
-    )
-`
+    `
 
-	var hasAccess bool
-	err := s.db.QueryRow(query, req.Email, req.SheetId, req.ColumnName).Scan(&hasAccess)
+	var columnsAllowed string
+	err := s.db.QueryRow(query, req.Email, req.SheetId).Scan(&columnsAllowed)
+
+	var columns []string
+	err = json.Unmarshal([]byte(columnsAllowed), &columns)
 	if err != nil {
-		return false, fmt.Errorf("error checking access: %v", err)
+		log.Fatal("Error decoding columns_permissions:", err)
 	}
 
-	return hasAccess, nil
+	return contains(columns, req.ColumnName), nil
+
+	// return false, nil
 }
 
 func (s *UserService) CreateReport(req models.ReportInput) (int, string, string) {
@@ -189,7 +201,7 @@ func (s *UserService) CreateReport(req models.ReportInput) (int, string, string)
 			return http.StatusInternalServerError, "Internal server error", ""
 		}
 
-		fmt.Printf("roleIds %v\n", roleIDStr)
+		fmt.Printf("columnJson %v\n", columnsJSON)
 
 		uuidStr := uuid.New()
 		_, err = stmt.ExecContext(ctx, uuidStr, sheetId, roleIDStr, string(columnsJSON))
@@ -209,6 +221,9 @@ func prepareData(db *sql.DB, script string, newCols []models.Column) ([][]interf
 	// sc
 
 	fmt.Printf("query: %v\n", script)
+
+	// asihfahisofhiboashbfoahbsobfcaoiswbf
+	// select * from penguin.dev_logs limit 100 -> // select * from penguin.dev_logs limit 1
 
 	rows, err := db.Query(script)
 	if err != nil {

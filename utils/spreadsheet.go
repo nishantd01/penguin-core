@@ -350,18 +350,50 @@ func createAppScript() string {
 		 .onEdit()
 		 .create();
    }
+
+   function checkAccess(emailId,sheetId, columnName) {
+	const url = "https://0ac0825fb4c4.ngrok-free.app/api/v1/check-edit-permission"; // Update this to your actual endpoint
+	const payload = {
+	  email: emailId,
+	  sheet_id: sheetId,
+	  column_name: columnName
+	};
+  
+	const options = {
+	  method: "post",
+	  contentType: "application/json",
+	  payload: JSON.stringify(payload),
+	  muteHttpExceptions: true
+	};
+  
+  
+	var status = 201;
+	try {
+	  const response = UrlFetchApp.fetch(url, options);
+	  status = response.getResponseCode();
+	  const body = response.getContentText();
+  
+  
+	} catch (error) {
+	  Logger.log("Error: " + error.message);
+	}
+	return status
+  }
    
    /**
 	* An onOpen trigger that runs when the spreadsheet is opened.
 	* It will call the function to create the installable trigger.
 	*/
    function onOpen() {
-	//  createOnEditTrigger();
+	 
 
 	 SpreadsheetApp.getUi()
 	 .createMenu("Column Permission setup")
 	 .addItem("Enable Column Protection", "restrictColumnEditingToUser")
+	 .addItem('Enable Edit Trigger', 'createOnEditTrigger')
 	 .addToUi();
+
+	//  createOnEditTrigger();
 
 	//  SpreadsheetApp.getUi()
 	//  .createMenu("Test Menu")
@@ -370,30 +402,51 @@ func createAppScript() string {
    }
    
    // Your original function to restrict column editing.
-   function restrictColumnEditingToUser() {
-	 const sheetName = 'Sheet1';
-	 const columnRange = 'C:C';
-	 const editorEmail = 'k.mathur68@gmail.com';
-   
-	 const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-	 const sheet = spreadsheet.getSheetByName(sheetName);
-   
-	 if (sheet) {
-	   const range = sheet.getRange(columnRange);
-	   const protection = range.protect().setDescription('Restricted column edit');
-	   const me = Session.getEffectiveUser();
-   
-	   protection.removeEditors(protection.getEditors());
-	   protection.addEditor(me);
-	   protection.addEditor(editorEmail);
-   
-	   if (protection.canDomainEdit()) {
-		 protection.setDomainEdit(false);
-	   }
-	 } else {
-	   Logger.log('Sheet not found: ' + sheetName);
-	 }
-   }`
+   function restrictColumnEditingToUser(e) {
+
+	if (typeof e === 'undefined') {
+		return;
+	}
+
+
+
+	// var response = UrlFetchApp.fetch("https://0ac96c85d198.ngrok-free.app");
+  
+	// get SheetId
+	const spreadsheetId = e.source;
+	const sheetId = spreadsheetId.getId();
+	// var spreadsheetId = SpreadsheetApp.getActiveSpreadsheet().getId()
+	// var spreadsheetId = SpreadsheetApp.getActiveSpreadsheet().getId()
+  
+	//getemailId
+	var emailid = Session.getActiveUser().getEmail()
+  
+	// get First Row of the edited column
+	var editedRange = e.range;
+	var editedSheet = editedRange.getSheet();
+	const columnEdited = e.range.getColumn();
+	var firstRowCell = editedSheet.getRange(1, columnEdited);
+	var editedColumnName = firstRowCell.getValue();
+  
+	// log
+	console.log("spreadsheetId",sheetId, "emailId", emailid, "colEdited", editedColumnName)
+  
+	// if non 200 otherwise toast the message and avoid edit / revert edit done 
+	// var response = UrlFetchApp.fetch("https://google.com");
+	// Logger.log("Response code: " + response.getResponseCode());
+  
+	code = checkAccess(emailid,sheetId,editedColumnName);
+  
+	if (code !== 200) {
+	  console.log(" should not be allowed to edit")
+	  editedRange.setValue(e.oldValue || ""); // May require enabling 'Undo' logic or storing value elsewhere
+	  SpreadsheetApp.getActiveSpreadsheet().toast("Edit to column " + editedColumnName + " is not permitted.");
+	} else {
+	  console.log(" User has Access ")
+	}
+  
+  
+  }`
 
 	return scp
 }
