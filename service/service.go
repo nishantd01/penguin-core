@@ -46,17 +46,22 @@ func (s *UserService) GetDbNames() ([]string, error) {
 	return dbNames, rows.Err()
 }
 
-func (s *UserService) GetRoles() ([]string, error) {
-	rows, err := s.db.Query("SELECT DISTINCT (name) FROM penguin.role")
+type RoleMeta struct {
+	Id   string `json:"id"`
+	Name string `json:"name"`
+}
+
+func (s *UserService) GetRoles() ([]RoleMeta, error) {
+	rows, err := s.db.Query("SELECT id,name FROM penguin.role")
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var roleNames []string
+	var roleNames []RoleMeta
 	for rows.Next() {
-		var roleName string
-		if err := rows.Scan(&roleName); err != nil {
+		var roleName RoleMeta
+		if err := rows.Scan(&roleName.Id, &roleName.Name); err != nil {
 			return nil, err
 		}
 		roleNames = append(roleNames, roleName)

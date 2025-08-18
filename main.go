@@ -45,7 +45,7 @@ func main() {
 
 	v1Group := r.Group("/api/v1")
 	{
-		v1Group.GET("/users/:id", userController.GetUser)
+		// v1Group.GET("/users/:id", userController.GetUser)
 		v1Group.GET("/dbnames", userController.GetDbNames)
 		v1Group.GET("/roles", userController.GetRoles)
 		v1Group.POST("/check-edit-permission", userController.CheckAccess)
@@ -54,3 +54,5 @@ func main() {
 
 	r.Run(":8083")
 }
+
+//
