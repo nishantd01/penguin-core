@@ -23,6 +23,8 @@ func main() {
 		"password=%s dbname=%s sslmode=disable",
 		host, port, user, password, dbname)
 
+	fmt.Printf("password %v\n", password)
+
 	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
 		panic(err)
@@ -47,6 +49,7 @@ func main() {
 		v1Group.GET("/dbnames", userController.GetDbNames)
 		v1Group.GET("/roles", userController.GetRoles)
 		v1Group.POST("/check-edit-permission", userController.CheckAccess)
+		v1Group.POST("/create-report", userController.CreateReport)
 	}
 
 	r.Run(":8083")

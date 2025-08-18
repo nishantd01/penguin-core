@@ -1,10 +1,12 @@
 package v1
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/nishantd01/penguin-core/models"
 	"github.com/nishantd01/penguin-core/service"
 )
 
@@ -78,4 +80,19 @@ func (c *UserController) CheckAccess(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{"message": "Access granted"})
+}
+
+func (ctl *UserController) CreateReport(ctx *gin.Context) {
+	var report models.ReportInput
+	if err := ctx.ShouldBindJSON(&report); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	fmt.Printf("req %v\n", report)
+
+	code, msg := ctl.userService.CreateReport(report)
+
+	ctx.JSON(code, gin.H{"message": msg})
+
 }
