@@ -99,14 +99,14 @@ func (s *UserService) CheckAccess(req AccessCheckRequest) (bool, error) {
 	return hasAccess, nil
 }
 
-func (s *UserService) CreateReport(req models.ReportInput) (int, string) {
+func (s *UserService) CreateReport(req models.ReportInput) (int, string, string) {
 	const scriptTitle = "BoundScriptForKshitiz"
 
 	// Step 1: Create spreadsheet
 	sheetId, err := utils.UploadSheet(req.ReportName, scriptTitle)
 	if err != nil {
 		log.Printf("Error creating spreadsheet: %v", err)
-		return http.StatusInternalServerError, "Could not create spreadsheet, please try again"
+		return http.StatusInternalServerError, "Could not create spreadsheet, please try again", ""
 	}
 
 	// err = utils.AddSheetToSpreadsheet(sheetId, req.ReportName)
@@ -120,7 +120,7 @@ func (s *UserService) CreateReport(req models.ReportInput) (int, string) {
 	sheetData, err := prepareData(s.db, req.SqlScript, req.Columns)
 	if err != nil {
 		log.Printf("Error preparing sheet data: %v", err)
-		return http.StatusInternalServerError, "Failed to prepare data for sheet"
+		return http.StatusInternalServerError, "Failed to prepare data for sheet", ""
 	}
 
 	fmt.Printf("shetid %v\n", sheetId)
@@ -129,7 +129,7 @@ func (s *UserService) CreateReport(req models.ReportInput) (int, string) {
 	err = utils.WriteDataToSheet(sheetId, "Sheet1", "A1", sheetData)
 	if err != nil {
 		log.Printf("Error writing data to sheet: %v", err)
-		return http.StatusInternalServerError, "Failed to write data to sheet"
+		return http.StatusInternalServerError, "Failed to write data to sheet", ""
 	}
 
 	// 5. Now protect the header row (first row)
@@ -177,7 +177,7 @@ func (s *UserService) CreateReport(req models.ReportInput) (int, string) {
 	`)
 	if err != nil {
 		log.Printf("Error preparing insert statement: %v", err)
-		return http.StatusInternalServerError, "Internal server error"
+		return http.StatusInternalServerError, "Internal server error", ""
 	}
 	defer stmt.Close()
 
@@ -186,7 +186,7 @@ func (s *UserService) CreateReport(req models.ReportInput) (int, string) {
 		columnsJSON, err := json.Marshal(columns)
 		if err != nil {
 			log.Printf("Error marshaling columns for role %s: %v", roleIDStr, err)
-			return http.StatusInternalServerError, "Internal server error"
+			return http.StatusInternalServerError, "Internal server error", ""
 		}
 
 		fmt.Printf("roleIds %v\n", roleIDStr)
@@ -195,13 +195,13 @@ func (s *UserService) CreateReport(req models.ReportInput) (int, string) {
 		_, err = stmt.ExecContext(ctx, uuidStr, sheetId, roleIDStr, string(columnsJSON))
 		if err != nil {
 			log.Printf("Insert failed for role %s: %v", roleIDStr, err)
-			return http.StatusInternalServerError, "Internal server error"
+			return http.StatusInternalServerError, "Internal server error", ""
 		}
 	}
 
 	// Success log
 	log.Printf("✅ Report created successfully with spreadsheet ID: %s", sheetId)
-	return http.StatusOK, "Report created successfully"
+	return http.StatusOK, "Report created successfully", "https://docs.google.com/spreadsheets/d/" + sheetId
 }
 
 func prepareData(db *sql.DB, script string, newCols []models.Column) ([][]interface{}, error) {

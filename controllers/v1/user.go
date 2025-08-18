@@ -91,8 +91,8 @@ func (ctl *UserController) CreateReport(ctx *gin.Context) {
 
 	fmt.Printf("req %v\n", report)
 
-	code, msg := ctl.userService.CreateReport(report)
+	code, msg, URL := ctl.userService.CreateReport(report)
 
-	ctx.JSON(code, gin.H{"message": msg})
+	ctx.JSON(code, gin.H{"message": msg, "sheetUrl": URL})
 
 }
