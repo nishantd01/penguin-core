@@ -10,12 +10,14 @@ CREATE TABLE penguin.role (
 );
 
 CREATE TABLE penguin.dev_logs (
-    id INT AUTOINCREMENT PRIMARY KEY,
+    id UUID PRIMARY KEY,
     timestamp TIMESTAMP,
     level VARCHAR(20),
     service_name VARCHAR(100),
     message VARCHAR(500)
 );
+
+INSERT INTO penguin.snowflake_databases (database_name) VALUES ('logs');
 
 INSERT INTO penguin.dev_logs (id,timestamp, level, service_name, message) VALUES
 ('39b17c2a-b542-4ec1-84ea-97d62b21db68','2025-08-15 10:15:00', 'INFO', 'auth-service', 'User login successful for user_id=12345'),
