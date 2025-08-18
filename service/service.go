@@ -205,16 +205,12 @@ func (s *UserService) CreateReport(req models.ReportInput) (int, string, string)
 }
 
 func prepareData(db *sql.DB, script string, newCols []models.Column) ([][]interface{}, error) {
-	var query string
-	if script == "" {
-		query = "SELECT * FROM dummy LIMIT 100"
-	} else {
-		query = script
-	}
 
-	fmt.Printf("query: %v\n", query)
+	// sc
 
-	rows, err := db.Query(query)
+	fmt.Printf("query: %v\n", script)
+
+	rows, err := db.Query(script)
 	if err != nil {
 		return nil, fmt.Errorf("query failed: %w", err)
 	}
