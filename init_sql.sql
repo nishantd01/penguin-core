@@ -63,6 +63,7 @@ VALUES
 ('54c3a7b0-6e59-4d29-95ef-5e85c8d469e6', 'Nishant Dehariya', 'nishantd02@gmail.com', 'b5d7cf7f-b2de-4a6c-8d44-0e8d3d1c7b12'),
 ('8b5fca38-4413-4f0c-a9e4-f67e2b674a45', 'Mayank Kumar', 'mayankmk165@gmail.com', '9c82cb57-0df3-4e86-8fa1-36ce983fc701'),
 ('2dc98baf-1d01-49b7-99cb-720e3e170df8', 'Sakshi', 'mehrasakshi5297@gmail.com', 'd1f3fbc5-4a1d-4e89-a2ef-9a4f6fdab123'),
+('b4e13a4f-d4c3-4a23-9343-9be05c89724f', 'Pranav Tv', 'pranavtv.mec@gmail.com', 'd1f3fbc5-4a1d-4e89-a2ef-9a4f6fdab123'),
 
 -- Insert spreadsheets with proper schema format
 -- INSERT INTO penguin.spreadsheet (id, report_name, created_at, schema)
