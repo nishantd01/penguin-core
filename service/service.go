@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -303,15 +304,19 @@ func (s *UserService) ValidateSQLQuery(req SQLValidationRequest) (*SQLValidation
 		return nil, fmt.Errorf("failed to switch database: %v", err)
 	}
 
+	// Clean the query by trimming spaces and removing trailing semicolons
+	query := strings.TrimSpace(req.Query)
+	query = strings.TrimRight(query, ";")
+
 	// Try to prepare the statement to validate SQL syntax
-	stmt, err := s.db.Prepare(req.Query)
+	stmt, err := s.db.Prepare(query)
 	if err != nil {
 		return nil, fmt.Errorf("invalid SQL query: %v", err)
 	}
 	defer stmt.Close()
 
 	// Execute the query with LIMIT 0 to get column information without fetching data
-	rows, err := s.db.Query(req.Query + " LIMIT 0")
+	rows, err := s.db.Query(query + " LIMIT 0")
 	if err != nil {
 		return nil, fmt.Errorf("error executing query: %v", err)
 	}
@@ -333,7 +338,7 @@ func (s *UserService) ValidateSQLQuery(req SQLValidationRequest) (*SQLValidation
 	}
 
 	// Get total count
-	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM (%s) as sub", req.Query)
+	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM (%s) as sub", query)
 	var count int
 	err = s.db.QueryRow(countQuery).Scan(&count)
 	if err != nil {
