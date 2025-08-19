@@ -3,7 +3,9 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 	v1 "github.com/nishantd01/penguin-core/controllers/v1"
@@ -39,6 +41,18 @@ func main() {
 	fmt.Println("Successfully connected")
 
 	r := gin.Default()
+
+	r.Use(cors.Default())
+
+	// OR Custom configuration
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:9000", "https://yourdomain.com"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
 
 	userService := service.NewUserService(db)
 	userController := v1.NewUserController(userService)

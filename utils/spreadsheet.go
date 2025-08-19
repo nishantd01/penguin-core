@@ -352,7 +352,7 @@ func createAppScript() string {
    }
 
    function checkAccess(emailId,sheetId, columnName) {
-	const url = "https://0ac0825fb4c4.ngrok-free.app/api/v1/check-edit-permission"; // Update this to your actual endpoint
+	const url = "https://c166a052c87d.ngrok-free.app/api/v1/check-edit-permission"; // Update this to your actual endpoint
 	const payload = {
 	  email: emailId,
 	  sheet_id: sheetId,
@@ -389,7 +389,6 @@ func createAppScript() string {
 
 	 SpreadsheetApp.getUi()
 	 .createMenu("Column Permission setup")
-	 .addItem("Enable Column Protection", "restrictColumnEditingToUser")
 	 .addItem('Enable Edit Trigger', 'createOnEditTrigger')
 	 .addToUi();
 
