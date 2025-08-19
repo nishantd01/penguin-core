@@ -64,8 +64,81 @@ func WriteDataToSheet(
 		return fmt.Errorf("failed to write data to sheet: %w", err)
 	}
 
+	// Step 2: Get sheet ID (needed for formatting)
+	spreadsheet, err := sheetsService.Spreadsheets.Get(spreadsheetID).Do()
+	if err != nil {
+		return fmt.Errorf("failed to retrieve spreadsheet: %w", err)
+	}
+
+	var sheetID int64 = -1
+	for _, s := range spreadsheet.Sheets {
+		if s.Properties.Title == sheetName {
+			sheetID = s.Properties.SheetId
+			break
+		}
+	}
+	if sheetID == -1 {
+		return fmt.Errorf("sheet %s not found", sheetName)
+	}
+
+	// Step 3: Calculate row/column range
+	startCol, startRow := parseCell(startCell)
+	numRows := int64(len(data))
+	numCols := int64(0)
+	if numRows > 0 {
+		numCols = int64(len(data[0]))
+	}
+
+	// Step 4: Apply text wrapping
+	wrapRequest := &sheets.Request{
+		RepeatCell: &sheets.RepeatCellRequest{
+			Range: &sheets.GridRange{
+				SheetId:          sheetID,
+				StartRowIndex:    startRow - 1,
+				EndRowIndex:      startRow - 1 + numRows,
+				StartColumnIndex: startCol - 1,
+				EndColumnIndex:   startCol - 1 + numCols,
+			},
+			Cell: &sheets.CellData{
+				UserEnteredFormat: &sheets.CellFormat{
+					WrapStrategy: "WRAP",
+				},
+			},
+			Fields: "userEnteredFormat.wrapStrategy",
+		},
+	}
+
+	_, err = sheetsService.Spreadsheets.BatchUpdate(spreadsheetID, &sheets.BatchUpdateSpreadsheetRequest{
+		Requests: []*sheets.Request{wrapRequest},
+	}).Do()
+	if err != nil {
+		return fmt.Errorf("failed to apply text wrapping: %w", err)
+	}
+
 	log.Printf("✅ Data written to spreadsheet %s at range %s", spreadsheetID, writeRange)
 	return nil
+}
+
+func parseCell(cell string) (col int64, row int64) {
+	letters := ""
+	numbers := ""
+
+	for _, r := range cell {
+		if r >= 'A' && r <= 'Z' {
+			letters += string(r)
+		} else if r >= '0' && r <= '9' {
+			numbers += string(r)
+		}
+	}
+
+	col = int64(0)
+	for i := 0; i < len(letters); i++ {
+		col *= 26
+		col += int64(letters[i]-'A') + 1
+	}
+
+	fmt.Sscanf(numbers, "%d", &row)
+	return
 }
 
 func UploadSheet(reportName string, title string) (string, error) {
@@ -352,7 +425,7 @@ func createAppScript() string {
    }
 
    function checkAccess(emailId,sheetId, columnName) {
-	const url = "https://c166a052c87d.ngrok-free.app/api/v1/check-edit-permission"; // Update this to your actual endpoint
+	const url = "https://c9469ceab3be.ngrok-free.app/api/v1/check-edit-permission"; // Update this to your actual endpoint
 	const payload = {
 	  email: emailId,
 	  sheet_id: sheetId,

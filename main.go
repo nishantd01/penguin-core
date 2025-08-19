@@ -67,7 +67,7 @@ func main() {
 		v1Group.POST("/validate-sql-query", userController.ValidateSQLQuery)
 	}
 
-	r.Run(":8083")
+	r.Run(":8084")
 }
 
 //

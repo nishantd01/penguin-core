@@ -76,15 +76,6 @@ type AccessCheckRequest struct {
 	ColumnName string `json:"column_name"`
 }
 
-func contains(slice []string, str string) bool {
-	for _, s := range slice {
-		if s == str {
-			return true
-		}
-	}
-	return false
-}
-
 // take sheetId as well , match permission wiyh reportId, email & column names rather thamn report name
 func (s *UserService) CheckAccess(req AccessCheckRequest) (bool, error) {
 
@@ -100,11 +91,16 @@ func (s *UserService) CheckAccess(req AccessCheckRequest) (bool, error) {
 
 	var columnsAllowed string
 	err := s.db.QueryRow(query, req.Email, req.SheetId).Scan(&columnsAllowed)
+	if err != nil {
+		log.Printf("Error decoding columns_permissions:", err)
+		return false, err
+	}
 
 	var columns []string
 	err = json.Unmarshal([]byte(columnsAllowed), &columns)
 	if err != nil {
-		log.Fatal("Error decoding columns_permissions:", err)
+		log.Printf("Error decoding each column:", err)
+		return false, err
 	}
 
 	return contains(columns, req.ColumnName), nil
@@ -217,6 +213,15 @@ func (s *UserService) CreateReport(req models.ReportInput) (int, string, string)
 	return http.StatusOK, "Report created successfully", "https://docs.google.com/spreadsheets/d/" + sheetId
 }
 
+func contains(slice []string, str string) bool {
+	for _, s := range slice {
+		if s == str {
+			return true
+		}
+	}
+	return false
+}
+
 func prepareData(db *sql.DB, script string, newCols []models.Column) ([][]interface{}, error) {
 
 	// sc
@@ -238,11 +243,19 @@ func prepareData(db *sql.DB, script string, newCols []models.Column) ([][]interf
 		return nil, fmt.Errorf("failed to get columns: %w", err)
 	}
 
+	fmt.Printf("there %v\n", newCols)
+
 	// Create full column list with additional columns
 	allCols := append([]string{}, dbCols...)
+	var nCols []models.Column
 	for _, col := range newCols {
-		allCols = append(allCols, col.Name)
+		if !contains(allCols, col.Name) {
+			allCols = append(allCols, col.Name)
+			nCols = append(nCols, col)
+		}
 	}
+
+	fmt.Printf("Here %v\n", allCols)
 
 	// Initialize the data slice with header row
 	header := make([]interface{}, len(allCols))
@@ -268,7 +281,7 @@ func prepareData(db *sql.DB, script string, newCols []models.Column) ([][]interf
 		copy(fullRow, rowData)
 
 		// Fill extra columns with empty string or default
-		for i := range newCols {
+		for i := range nCols {
 			fullRow[len(dbCols)+i] = "" // or newCols[i].DefaultValue if available
 		}
 
