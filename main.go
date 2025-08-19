@@ -50,6 +50,7 @@ func main() {
 		v1Group.GET("/roles", userController.GetRoles)
 		v1Group.POST("/check-edit-permission", userController.CheckAccess)
 		v1Group.POST("/create-report", userController.CreateReport)
+		v1Group.POST("/validate-sql-query", userController.ValidateSQLQuery)
 	}
 
 	r.Run(":8083")

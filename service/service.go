@@ -280,3 +280,68 @@ func prepareData(db *sql.DB, script string, newCols []models.Column) ([][]interf
 
 	return data, nil
 }
+
+type SQLValidationRequest struct {
+	Query  string `json:"query"`
+	DBName string `json:"db_name"`
+}
+
+type ColumnInfo struct {
+	ColName  string `json:"col_name"`
+	DataType string `json:"data_type"`
+}
+
+type SQLValidationResponse struct {
+	Columns []ColumnInfo `json:"columns"`
+	Count   int          `json:"count"`
+}
+
+func (s *UserService) ValidateSQLQuery(req SQLValidationRequest) (*SQLValidationResponse, error) {
+	// First switch to the requested database
+	_, err := s.db.Exec(fmt.Sprintf("SET search_path TO %s", req.DBName))
+	if err != nil {
+		return nil, fmt.Errorf("failed to switch database: %v", err)
+	}
+
+	// Try to prepare the statement to validate SQL syntax
+	stmt, err := s.db.Prepare(req.Query)
+	if err != nil {
+		return nil, fmt.Errorf("invalid SQL query: %v", err)
+	}
+	defer stmt.Close()
+
+	// Execute the query with LIMIT 0 to get column information without fetching data
+	rows, err := s.db.Query(req.Query + " LIMIT 0")
+	if err != nil {
+		return nil, fmt.Errorf("error executing query: %v", err)
+	}
+	defer rows.Close()
+
+	// Get column types
+	columnTypes, err := rows.ColumnTypes()
+	if err != nil {
+		return nil, fmt.Errorf("error getting column types: %v", err)
+	}
+
+	// Build column info
+	columns := make([]ColumnInfo, len(columnTypes))
+	for i, col := range columnTypes {
+		columns[i] = ColumnInfo{
+			ColName:  col.Name(),
+			DataType: col.DatabaseTypeName(),
+		}
+	}
+
+	// Get total count
+	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM (%s) as sub", req.Query)
+	var count int
+	err = s.db.QueryRow(countQuery).Scan(&count)
+	if err != nil {
+		return nil, fmt.Errorf("error getting row count: %v", err)
+	}
+
+	return &SQLValidationResponse{
+		Columns: columns,
+		Count:   count,
+	}, nil
+}

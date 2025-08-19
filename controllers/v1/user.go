@@ -101,3 +101,19 @@ func (ctl *UserController) CreateReport(ctx *gin.Context) {
 	ctx.JSON(code, gin.H{"message": msg, "sheetUrl": URL})
 
 }
+
+func (ctl *UserController) ValidateSQLQuery(ctx *gin.Context) {
+	var req service.SQLValidationRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	response, err := ctl.userService.ValidateSQLQuery(req)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, response)
+}

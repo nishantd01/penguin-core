@@ -17,7 +17,7 @@ CREATE TABLE penguin.dev_logs (
     message VARCHAR(500)
 );
 
-INSERT INTO penguin.snowflake_databases (database_name) VALUES ('logs');
+INSERT INTO penguin.snowflake_databases (database_name) VALUES ('penguin');
 
 INSERT INTO penguin.dev_logs (id,timestamp, level, service_name, message) VALUES
 ('39b17c2a-b542-4ec1-84ea-97d62b21db68','2025-08-15 10:15:00', 'INFO', 'auth-service', 'User login successful for user_id=12345'),
