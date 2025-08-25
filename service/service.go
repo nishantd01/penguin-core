@@ -685,6 +685,103 @@ func (s *UserService) ValidateSQLQuery(req SQLValidationRequest) (*SQLValidation
 	}, nil
 }
 
+func (s *UserService) CheckViewPermission(req models.ViewPermissionRequest) (*models.ViewPermissionResponse, error) {
+	response := &models.ViewPermissionResponse{
+		SpreadsheetID: req.SpreadsheetID,
+		TabName:       req.TabName,
+		EmailID:       req.EmailID,
+		CanView:       false,
+	}
+
+	// First, check if user exists and get their role
+	var userRoleID string
+	userQuery := `SELECT role_id FROM penguin.user WHERE email = $1`
+	err := s.db.QueryRow(userQuery, req.EmailID).Scan(&userRoleID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			response.Message = "User not found"
+			return response, nil
+		}
+		return response, fmt.Errorf("error querying user: %w", err)
+	}
+
+	// Check if spreadsheet exists
+	var spreadsheetExists bool
+	spreadsheetQuery := `SELECT EXISTS(SELECT 1 FROM penguin.spreadsheet WHERE id = $1)`
+	err = s.db.QueryRow(spreadsheetQuery, req.SpreadsheetID).Scan(&spreadsheetExists)
+	if err != nil {
+		return response, fmt.Errorf("error checking spreadsheet: %w", err)
+	}
+
+	if !spreadsheetExists {
+		response.Message = "Spreadsheet not found"
+		return response, nil
+	}
+
+	// Check if user has general access to the spreadsheet
+	var hasSpreadsheetAccess bool
+	spreadsheetPermissionQuery := `
+		SELECT EXISTS(
+			SELECT 1 FROM penguin.spreadsheetpermissions 
+			WHERE spreadsheet_id = $1 AND role_id = $2
+		)`
+	err = s.db.QueryRow(spreadsheetPermissionQuery, req.SpreadsheetID, userRoleID).Scan(&hasSpreadsheetAccess)
+	if err != nil {
+		return response, fmt.Errorf("error checking spreadsheet permissions: %w", err)
+	}
+
+	if !hasSpreadsheetAccess {
+		response.Message = "User does not have access to this spreadsheet"
+		return response, nil
+	}
+
+	// If no specific tab is requested, user can view the spreadsheet
+	if req.TabName == "" {
+		response.CanView = true
+		response.Message = "User can view the spreadsheet"
+		return response, nil
+	}
+
+	// Check if the specific tab/stage exists and if user has access to it
+	var hasTabAccess bool
+	tabPermissionQuery := `
+		SELECT EXISTS(
+			SELECT 1 FROM penguin.stages 
+			WHERE spreadsheet_id = $1 
+			AND name = $2 
+			AND $3 = ANY(roles)
+		)`
+	err = s.db.QueryRow(tabPermissionQuery, req.SpreadsheetID, req.TabName, userRoleID).Scan(&hasTabAccess)
+	if err != nil {
+		return response, fmt.Errorf("error checking tab permissions: %w", err)
+	}
+
+	if !hasTabAccess {
+		// Check if the stage exists at all
+		var stageExists bool
+		stageExistsQuery := `
+			SELECT EXISTS(
+				SELECT 1 FROM penguin.stages 
+				WHERE spreadsheet_id = $1 AND name = $2
+			)`
+		err = s.db.QueryRow(stageExistsQuery, req.SpreadsheetID, req.TabName).Scan(&stageExists)
+		if err != nil {
+			return response, fmt.Errorf("error checking if stage exists: %w", err)
+		}
+
+		if !stageExists {
+			response.Message = "Tab/Stage not found"
+		} else {
+			response.Message = "User does not have access to this tab/stage"
+		}
+		return response, nil
+	}
+
+	response.CanView = true
+	response.Message = "User can view the specified tab/stage"
+	return response, nil
+}
+
 func generateStagedWorkflowScript(stages []models.Stage) string {
 	// Generate stage names array for JavaScript
 	stageNames := make([]string, len(stages))

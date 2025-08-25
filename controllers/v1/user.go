@@ -125,3 +125,19 @@ func (ctl *UserController) ValidateSQLQuery(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, response)
 }
+
+func (ctl *UserController) CheckViewPermission(ctx *gin.Context) {
+	var req models.ViewPermissionRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	response, err := ctl.userService.CheckViewPermission(req)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, response)
+}
