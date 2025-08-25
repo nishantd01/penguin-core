@@ -78,3 +78,14 @@ VALUES
 -- VALUES
 -- ('c7b2ae35-6404-49b3-9c6b-86a967a0d8d4','a1d4902b-655a-4e9e-bf24-5f8e8b3cc33d', 'b5d7cf7f-b2de-4a6c-8d44-0e8d3d1c7b12', ARRAY['date','amount','product']),
 -- ('6d0f8be9-7ac5-4e41-9e9f-51b0592cfb3c' ,'a1d4902b-655a-4e9e-bf24-5f8e8b3cc33d', 'd1f3fbc5-4a1d-4e89-a2ef-9a4f6fdab123', ARRAY['date','amount']);
+
+CREATE TABLE penguin.stages (
+                                id UUID PRIMARY KEY,
+                                spreadsheet_id VARCHAR(255) NOT NULL,
+                                name VARCHAR(255) NOT NULL,
+                                description TEXT,
+                                roles UUID[],
+                                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                FOREIGN KEY (spreadsheet_id) REFERENCES penguin.spreadsheet (id) ON DELETE CASCADE
+);
