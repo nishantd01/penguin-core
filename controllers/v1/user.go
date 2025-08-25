@@ -96,7 +96,15 @@ func (ctl *UserController) CreateReport(ctx *gin.Context) {
 
 	fmt.Printf("req %v\n", report)
 
-	code, msg, URL := ctl.userService.CreateReport(report)
+	var code int
+	var msg, URL string
+	if len(report.Stages) == 0 {
+		fmt.Println("First Flow")
+		code, msg, URL = ctl.userService.CreateReport(report)
+	} else {
+		fmt.Println("Second Flow")
+		code, msg, URL = ctl.userService.CreateStagedReport(report)
+	}
 
 	ctx.JSON(code, gin.H{"message": msg, "sheetUrl": URL})
 

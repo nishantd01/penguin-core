@@ -425,7 +425,7 @@ func createAppScript() string {
    }
 
    function checkAccess(emailId,sheetId, columnName) {
-	const url = "https://c9469ceab3be.ngrok-free.app/api/v1/check-edit-permission"; // Update this to your actual endpoint
+	const url = "https://7028edfe3d71.ngrok-free.app/api/v1/check-edit-permission"; // Update this to your actual endpoint
 	const payload = {
 	  email: emailId,
 	  sheet_id: sheetId,
@@ -491,7 +491,9 @@ func createAppScript() string {
 	// var spreadsheetId = SpreadsheetApp.getActiveSpreadsheet().getId()
   
 	//getemailId
-	var emailid = Session.getActiveUser().getEmail()
+	var emailid = Session.getActiveUser().getEmail();
+	// var emailid = e.User;
+	console.log(e.user)
   
 	// get First Row of the edited column
 	var editedRange = e.range;

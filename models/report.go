@@ -6,8 +6,15 @@ type Column struct {
 	WritableBy []string `json:"writableBy"`
 }
 
+type Stage struct {
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	Roles       []string `json:"roles"`
+}
+
 type ReportInput struct {
 	ReportName string   `json:"reportName"`
 	SqlScript  string   `json:"sqlScript"` // could use this script or dummy table
 	Columns    []Column `json:"columns"`
+	Stages     []Stage  `json:"stages"`
 }
