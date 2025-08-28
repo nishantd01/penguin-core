@@ -32,3 +32,9 @@ type ViewPermissionResponse struct {
 	EmailID       string `json:"email_id"`
 	Message       string `json:"message"`
 }
+
+type ReportMeta struct {
+	Name string `json:"name"`
+	Url  string `json:"url"`
+	Id   string `json:"id"`
+}

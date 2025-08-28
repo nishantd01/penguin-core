@@ -168,10 +168,12 @@ func (s *UserService) CreateReport(req models.ReportInput) (int, string, string)
 
 	createdAt := time.Now()
 
+	finalurl := "https://docs.google.com/spreadsheets/d/" + sheetId
+
 	_, err = s.db.Exec(`
-	INSERT INTO penguin.spreadsheet (id, report_name, created_at, schema)
-	VALUES ($1, $2, $3, $4)
-`, sheetId, req.ReportName, createdAt, schemaJSON)
+	INSERT INTO penguin.spreadsheet (id, report_url,report_name, created_at, schema)
+	VALUES ($1, $2, $3, $4, $5)
+`, sheetId, finalurl, req.ReportName, createdAt, schemaJSON)
 	if err != nil {
 		log.Fatalf("Failed to insert spreadsheet: %v", err)
 	}
@@ -216,7 +218,7 @@ func (s *UserService) CreateReport(req models.ReportInput) (int, string, string)
 
 	// Success log
 	log.Printf("✅ Report created successfully with spreadsheet ID: %s", sheetId)
-	return http.StatusOK, "Report created successfully", "https://docs.google.com/spreadsheets/d/" + sheetId
+	return http.StatusOK, "Report created successfully", finalurl
 }
 
 // Reads the OAuth token from a file
@@ -414,8 +416,10 @@ func (s *UserService) CreateStagedReport(req models.ReportInput) (int, string, s
 		}
 	}
 
+	url := "https://docs.google.com/spreadsheets/d/" + resp.SpreadsheetId
+
 	// Save to database
-	err = s.saveStagedReportToDatabase(resp.SpreadsheetId, req)
+	err = s.saveStagedReportToDatabase(resp.SpreadsheetId, url, req)
 	if err != nil {
 		log.Printf("Warning: Failed to save report to database: %v", err)
 	}
@@ -432,11 +436,10 @@ func (s *UserService) CreateStagedReport(req models.ReportInput) (int, string, s
 	fmt.Printf("   • Remaining tabs with headers ready for workflow\n")
 	fmt.Printf("   • Automatic workflow movement and professional formatting\n")
 
-	url := "https://docs.google.com/spreadsheets/d/" + resp.SpreadsheetId
 	return http.StatusOK, "Staged Workflow Spreadsheet Created", url
 }
 
-func (s *UserService) saveStagedReportToDatabase(spreadsheetId string, req models.ReportInput) error {
+func (s *UserService) saveStagedReportToDatabase(spreadsheetId, finalUrl string, req models.ReportInput) error {
 	// Convert columns to a map[string]string for schema
 	schema := make(map[string]string)
 	for _, col := range req.Columns {
@@ -452,9 +455,9 @@ func (s *UserService) saveStagedReportToDatabase(spreadsheetId string, req model
 
 	// Insert spreadsheet record
 	_, err = s.db.Exec(`
-		INSERT INTO penguin.spreadsheet (id, report_name, created_at, schema)
-		VALUES ($1, $2, $3, $4)
-	`, spreadsheetId, req.ReportName, createdAt, schemaJSON)
+		INSERT INTO penguin.spreadsheet (id,report_url, report_name, created_at, schema)
+		VALUES ($1, $2, $3, $4, $5)
+	`, spreadsheetId, finalUrl, req.ReportName, createdAt, schemaJSON)
 	if err != nil {
 		return fmt.Errorf("failed to insert spreadsheet: %w", err)
 	}
@@ -1471,4 +1474,34 @@ function clearAllData() {
 `, stageNamesJS)
 
 	return scriptContent
+}
+
+func (s *UserService) GetReports() ([]models.ReportMeta, error) {
+	query := `
+        SELECT id, report_name, report_url
+        FROM penguin.spreadsheet
+    `
+
+	rows, err := s.db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var reports []models.ReportMeta
+
+	for rows.Next() {
+		var report models.ReportMeta
+		err := rows.Scan(&report.Id, &report.Name, &report.Url)
+		if err != nil {
+			return nil, err
+		}
+		reports = append(reports, report)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return reports, nil
 }

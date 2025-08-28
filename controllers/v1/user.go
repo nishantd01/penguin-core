@@ -141,3 +141,12 @@ func (ctl *UserController) CheckViewPermission(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, response)
 }
+
+func (ctl *UserController) FetchReports(ctx *gin.Context) {
+	roleMetaData, err := ctl.userService.GetReports()
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	ctx.JSON(http.StatusOK, roleMetaData)
+}

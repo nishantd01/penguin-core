@@ -37,6 +37,7 @@ CREATE TABLE penguin.user (
 CREATE TABLE penguin.spreadsheet (
     id VARCHAR(255) PRIMARY KEY,
     report_name VARCHAR(255) NOT NULL,
+    report_url VARCHAR(255),
     created_at TIMESTAMP,
     schema JSONB
 );
