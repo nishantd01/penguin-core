@@ -96,7 +96,15 @@ func (ctl *UserController) CreateReport(ctx *gin.Context) {
 
 	fmt.Printf("req %v\n", report)
 
-	code, msg, URL := ctl.userService.CreateReport(report)
+	var code int
+	var msg, URL string
+	if len(report.Stages) == 0 {
+		fmt.Println("First Flow")
+		code, msg, URL = ctl.userService.CreateReport(report)
+	} else {
+		fmt.Println("Second Flow")
+		code, msg, URL = ctl.userService.CreateStagedReport(report)
+	}
 
 	ctx.JSON(code, gin.H{"message": msg, "sheetUrl": URL})
 
@@ -116,4 +124,29 @@ func (ctl *UserController) ValidateSQLQuery(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, response)
+}
+
+func (ctl *UserController) CheckViewPermission(ctx *gin.Context) {
+	var req models.ViewPermissionRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	response, err := ctl.userService.CheckViewPermission(req)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, response)
+}
+
+func (ctl *UserController) FetchReports(ctx *gin.Context) {
+	roleMetaData, err := ctl.userService.GetReports()
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	ctx.JSON(http.StatusOK, roleMetaData)
 }
